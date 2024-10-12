@@ -1,4 +1,4 @@
-module golibs
+module  github.com/yongxiaodong/golibs
 
 go 1.21
 
