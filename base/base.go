@@ -21,6 +21,7 @@ func Obfuscate(input string) string {
 	if count == 0 {
 		return "***"
 	}
+	// 11位数字则认为是手机号，返回前3位和后四位
 	if count == 11 && isAllDigits(input) {
 		return string(runes[:3]) + "***" + string(runes[7:])
 	}

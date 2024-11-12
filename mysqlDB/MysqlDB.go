@@ -7,6 +7,7 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"log"
+	"math"
 	"strings"
 	"time"
 )
@@ -151,14 +152,49 @@ func NewMysqlSqlc(myp ConnParams) *sql.DB {
 	return masterDb
 }
 
-func NewEsConn() {
-
+func GORMBatchInsert(data []interface{}, destDB *gorm.DB, batchSize int) {
+	if batchSize > 10000 || batchSize < 100 {
+		log.Println("batchSize cannot be greater than 10000 or less than 100, set default batchSize to 500")
+		batchSize = 500
+	}
+	total := len(data)
+	for i := 0; i < total; i += batchSize {
+		end := int(math.Min(float64(i+batchSize), float64(total)))
+		batchData := data[i:end]
+		destDB.Create(&batchData)
+	}
 }
 
-func NewClickhouseConn() {
-
+type BatchOption struct {
+	// 单次删除的数据
+	BatchSize int
+	// 执行一次后休眠时间，毫秒
+	SlowTime time.Duration
 }
 
-func NewRedisConn() {
-
+func BatchDelete(db *gorm.DB, sql string, TName string, option ...BatchOption) *gorm.DB {
+	var result *gorm.DB
+	row := int64(0)
+	var size = 50000
+	var slowTime time.Duration = 0
+	if len(option) > 0 && option[0].BatchSize > 0 {
+		size = option[0].BatchSize
+	}
+	if len(option) > 0 && option[0].SlowTime > 0 {
+		slowTime = option[0].SlowTime
+	}
+	for {
+		result = db.Exec(sql, size)
+		row = row + result.RowsAffected
+		if result.Error != nil {
+			break
+		}
+		log.Printf("分批执行成功: %s - 影响行: %d", TName, result.RowsAffected)
+		if result.RowsAffected < int64(size) {
+			break
+		}
+		time.Sleep(time.Millisecond * slowTime)
+	}
+	result.RowsAffected = result.RowsAffected + row
+	return result
 }
