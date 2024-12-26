@@ -42,7 +42,7 @@ func dirExists(path string) bool {
 	return info.IsDir()
 }
 
-// 校验目录，不存在则创建
+// CreateDirIfNotExists 校验目录，不存在则创建
 func CreateDirIfNotExists(path string) error {
 	if !dirExists(path) {
 		err := os.MkdirAll(path, os.ModePerm)
@@ -53,7 +53,7 @@ func CreateDirIfNotExists(path string) error {
 	return nil
 }
 
-// 生成特定长度的随机字符
+// RandString 生成特定长度的随机字符
 func RandString(n int) string {
 	const charset = "abcdefghijklmnopqrstuvwxyz0123456789"
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
